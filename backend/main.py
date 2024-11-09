@@ -7,9 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 notes = []
-current_id = 1
-
-
 
 # Add CORS middleware
 app.add_middleware(
@@ -20,20 +17,16 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-@app.post("/notes/", response_model=List[Note])
-async def create_notes(new_notes: List[Note]):
-    created_notes = []
-    for note in new_notes:
-        note.id = str(uuid.uuid4())
-        notes.append(note)
-        created_notes.append(note)
-    return created_notes
+@app.post("/notes/", response_model=Note)
+async def create_note(new_note: Note):
+    new_note.id = str(uuid.uuid4())  # Generate a unique ID
+    notes.append(new_note)
+    return new_note
 
 @app.get("/notes/", response_model=List[Note])
 async def get_notes():
     return notes
 
-# Get a specific note by ID
 @app.get("/notes/{note_id}", response_model=Note)
 async def get_note(note_id: str):
     note = next((note for note in notes if note.id == note_id), None)
@@ -48,11 +41,10 @@ async def update_note(note_id: str, updated_note: Note):
             notes[index].title = updated_note.title
             notes[index].content = updated_note.content
             return notes[index]
-        raise HTTPException(status_code=404, detail="Note not found")
+    raise HTTPException(status_code=404, detail="Note not found")
 
 @app.delete("/notes/{note_id}")
 async def delete_note(note_id: str):
     global notes
     notes = [note for note in notes if note.id != note_id]
     return {"message": "Note deleted successfully"}
-
